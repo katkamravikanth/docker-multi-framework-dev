@@ -5,10 +5,10 @@ param(
     [Parameter(Mandatory=$true)]
     [ValidateSet("laravel", "symfony", "react")]
     [string]$Type,
-    
+
     [Parameter(Mandatory=$true)]
     [string]$Name,
-    
+
     [Parameter(Mandatory=$true)]
     [int]$Port
 )
@@ -48,12 +48,12 @@ if (!(Test-Path $projectPath)) {
 if ($createFramework) {
     Write-Host "" 
     Write-Host "Installing $Type framework files..." -ForegroundColor Cyan
-    
+
     if ($Type -eq "laravel") {
         Write-Host "Running: composer create-project laravel/laravel temp_laravel" -ForegroundColor Gray
         Write-Host "(This may take a few minutes to download packages...)" -ForegroundColor Gray
         composer create-project laravel/laravel "temp_laravel" --prefer-dist
-        
+
         if (Test-Path "temp_laravel") {
             Get-ChildItem -Path "temp_laravel" -Force | Copy-Item -Destination $projectPath -Recurse -Force
             Remove-Item -Path "temp_laravel" -Recurse -Force
@@ -67,12 +67,12 @@ if ($createFramework) {
         Write-Host "  1. Skeleton (minimal)" -ForegroundColor White
         Write-Host "  2. WebApp (full-stack with Twig, Doctrine, etc.)" -ForegroundColor White
         $symfonyType = Read-Host "Enter choice (1 or 2)"
-        
+
         $projectType = if ($symfonyType -eq "2") { "symfony/webapp" } else { "symfony/skeleton" }
         Write-Host "Running: composer create-project $projectType temp_symfony" -ForegroundColor Gray
         Write-Host "(This may take a few minutes to download packages...)" -ForegroundColor Gray
         composer create-project $projectType "temp_symfony" --prefer-dist
-        
+
         if (Test-Path "temp_symfony") {
             Get-ChildItem -Path "temp_symfony" -Force | Copy-Item -Destination $projectPath -Recurse -Force
             Remove-Item -Path "temp_symfony" -Recurse -Force
@@ -85,12 +85,12 @@ if ($createFramework) {
         Write-Host "Running: npm create vite@latest temp_react -- --template react" -ForegroundColor Gray
         Write-Host "(This may take a moment to download packages...)" -ForegroundColor Gray
         "n" | npm create vite@latest "temp_react" -- --template react
-        
+
         if (Test-Path "temp_react") {
             Get-ChildItem -Path "temp_react" -Force | Copy-Item -Destination $projectPath -Recurse -Force
             Remove-Item -Path "temp_react" -Recurse -Force
             Write-Host "✓ React (Vite) framework files installed successfully" -ForegroundColor Green
-            
+
             # Install dependencies
             Write-Host "Installing npm dependencies..." -ForegroundColor Cyan
             Push-Location $projectPath
@@ -109,14 +109,14 @@ $sslDir = "etc\ssl\$ProjectName"
 if (!(Test-Path $sslDir)) {
     New-Item -ItemType Directory -Path $sslDir -Force | Out-Null
     Write-Host "✓ Created SSL directory: $sslDir" -ForegroundColor Green
-    
+
     # Generate self-signed certificate
     $certPath = "$sslDir\$ProjectName.crt"
     $keyPath = "$sslDir\$ProjectName.key"
-    
+
     try {
         $null = & openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout $keyPath -out $certPath -subj "/C=US/ST=State/L=City/O=Organization/CN=$ProjectName.local" 2>&1
-        
+
         if (Test-Path $certPath) {
             Write-Host "✓ Generated SSL certificate: $certPath" -ForegroundColor Green
             Write-Host "✓ Generated SSL key: $keyPath" -ForegroundColor Green
@@ -358,4 +358,3 @@ if ($Type -eq "laravel") {
 }
 
 Write-Host ""
-

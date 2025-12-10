@@ -65,12 +65,12 @@ fi
 if [ "$CREATE_FRAMEWORK" == "true" ]; then
     echo ""
     echo "Installing $TYPE framework files..."
-    
+
     if [ "$TYPE" == "laravel" ]; then
         echo "Running: composer create-project laravel/laravel temp_laravel"
         echo "(This may take a few minutes to download packages...)"
         composer create-project laravel/laravel temp_laravel --prefer-dist
-        
+
         if [ -d "temp_laravel" ]; then
             cp -r temp_laravel/* "$PROJECT_PATH/"
             cp -r temp_laravel/.* "$PROJECT_PATH/" 2>/dev/null || true
@@ -84,17 +84,17 @@ if [ "$CREATE_FRAMEWORK" == "true" ]; then
         echo "  1. Skeleton (minimal)"
         echo "  2. WebApp (full-stack with Twig, Doctrine, etc.)"
         read -p "Enter choice (1 or 2): " symfony_type
-        
+
         if [ "$symfony_type" == "2" ]; then
             PROJECT_TYPE="symfony/webapp"
         else
             PROJECT_TYPE="symfony/skeleton"
         fi
-        
+
         echo "Running: composer create-project $PROJECT_TYPE temp_symfony"
         echo "(This may take a few minutes to download packages...)"
         composer create-project "$PROJECT_TYPE" temp_symfony --prefer-dist
-        
+
         if [ -d "temp_symfony" ]; then
             cp -r temp_symfony/* "$PROJECT_PATH/"
             cp -r temp_symfony/.* "$PROJECT_PATH/" 2>/dev/null || true
@@ -107,13 +107,13 @@ if [ "$CREATE_FRAMEWORK" == "true" ]; then
         echo "Running: npm create vite@latest temp_react -- --template react"
         echo "(This may take a moment to download packages...)"
         echo "n" | npm create vite@latest temp_react -- --template react
-        
+
         if [ -d "temp_react" ]; then
             cp -r temp_react/* "$PROJECT_PATH/"
             cp -r temp_react/.* "$PROJECT_PATH/" 2>/dev/null || true
             rm -rf temp_react
             echo "✓ React (Vite) framework files installed successfully"
-            
+
             # Install dependencies
             echo "Installing npm dependencies..."
             cd "$PROJECT_PATH"
@@ -132,17 +132,17 @@ SSL_DIR="etc/ssl/$PROJECT_NAME"
 if [ ! -d "$SSL_DIR" ]; then
     mkdir -p "$SSL_DIR"
     echo "✓ Created SSL directory: $SSL_DIR"
-    
+
     # Generate self-signed certificate
     CERT_PATH="$SSL_DIR/$PROJECT_NAME.crt"
     KEY_PATH="$SSL_DIR/$PROJECT_NAME.key"
-    
+
     if command -v openssl &> /dev/null; then
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
             -keyout "$KEY_PATH" \
             -out "$CERT_PATH" \
             -subj "/C=US/ST=State/L=City/O=Organization/CN=$PROJECT_NAME.local" &> /dev/null
-        
+
         echo "✓ Generated SSL certificate: $CERT_PATH"
         echo "✓ Generated SSL key: $KEY_PATH"
     else
