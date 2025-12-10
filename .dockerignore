@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+.build
+.env
+etc/mysql_data
+*.sock
+*.log
+tmp
+build
+dist
+docker-compose.override.yml
+.vscode

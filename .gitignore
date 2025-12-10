@@ -1,0 +1,28 @@
+# Global
+.*.swp
+.DS_Store
+
+# PHPStorm
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/dictionaries
+
+# Netbeans
+nbproject/
+/nbproject/
+/nbproject/private/
+/nbproject/private/private.properties
+
+# VSCode
+.vscode/
+
+# MySQL data and ssl
+etc/mysql_data/
+etc/ssl/
+
+logs/
+
+projects/php/
+projects/react/
+
+.env

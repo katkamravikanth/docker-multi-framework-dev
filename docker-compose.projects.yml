@@ -1,0 +1,98 @@
+# Projects Compose File
+# Add your Laravel, Symfony and React projects here
+# Each project can be easily enabled/disabled by commenting out its section
+
+services:
+  # ==========================================
+  # ADD YOUR PROJECTS BELOW
+  # ==========================================
+  # 
+  # Use add-project.ps1 (Windows) or add-project.sh (Linux/macOS)
+  # to generate service definitions automatically
+  #
+  # Example Laravel Project:
+  # laravel-myproject:
+  #   image: php-framework:latest
+  #   container_name: laravel-myproject
+  #   volumes:
+  #     - "./etc/php/php.ini:/usr/local/etc/php/conf.d/php.ini"
+  #     - "./projects/php/myproject:/var/www/myproject"
+  #   working_dir: /var/www/myproject
+  #   ports:
+  #     - "9001:9000"
+  #   depends_on:
+  #     - mysqldb
+  #   networks:
+  #     - app_network
+  #
+  # Example Symfony Project:
+  # symfony-myproject:
+  #   image: php-framework:latest
+  #   container_name: symfony-myproject
+  #   volumes:
+  #     - "./etc/php/php.ini:/usr/local/etc/php/conf.d/php.ini"
+  #     - "./projects/php/myproject:/var/www/myproject"
+  #   working_dir: /var/www/myproject
+  #   ports:
+  #     - "9002:9000"
+  #   depends_on:
+  #     - mysqldb
+  #   networks:
+  #     - app_network
+  #   environment:
+  #     - APP_ENV=dev
+  #     - DATABASE_URL=mysql://root:password@mysqldb:3306/symfony_db
+  #
+  # Example React Project:
+  # react-myproject:
+  #   image: react-framework:latest
+  #   container_name: react-myproject
+  #   ports:
+  #     - "5173:5173"
+  #   environment:
+  #     - CHOKIDAR_USEPOLLING=true
+  #     - NODE_ENV=development
+  #   volumes:
+  #     - "./projects/react/myproject:/app"
+  #     - "/app/node_modules"
+  #   working_dir: /app
+  #   command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+  #   restart: always
+  #   networks:
+  #     - app_network
+
+  # Laravel Project: myapp
+  laravel-myapp:
+    image: php-framework:latest
+    container_name: laravel-myapp
+    volumes:
+      - "./etc/php/php.ini:/usr/local/etc/php/conf.d/php.ini"
+      - "./projects/php/myapp:/var/www/myapp"
+    working_dir: /var/www/myapp
+    ports:
+      - "9001:9000"
+    depends_on:
+      - mysqldb
+    networks:
+      - app_network
+
+  # Scheduler for Laravel: myapp
+  laravel-myapp-scheduler:
+    image: php-framework:latest
+    container_name: laravel-myapp-scheduler
+    volumes:
+      - "./etc/php/php.ini:/usr/local/etc/php/conf.d/php.ini"
+      - "./projects/php/myapp:/var/www/myapp"
+    working_dir: /var/www/myapp
+    command: php artisan schedule:work
+    restart: always
+    depends_on:
+      - laravel-myapp
+      - mysqldb
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    external: true
+    name: docker_app_network
