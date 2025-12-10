@@ -41,11 +41,90 @@ else
     PROJECT_PATH="projects/react/$PROJECT_NAME"
 fi
 
+CREATE_FRAMEWORK=false
+
 if [ ! -d "$PROJECT_PATH" ]; then
     mkdir -p "$PROJECT_PATH"
     echo "✓ Created directory: $PROJECT_PATH"
+    CREATE_FRAMEWORK=true
 else
-    echo "⚠ Directory already exists: $PROJECT_PATH"
+    # Check if directory is empty
+    if [ -z "$(ls -A "$PROJECT_PATH")" ]; then
+        echo "⚠ Directory exists but is empty: $PROJECT_PATH"
+        CREATE_FRAMEWORK=true
+    else
+        echo "⚠ Directory already exists with files: $PROJECT_PATH"
+        read -p "Do you want to create framework files anyway? (y/n): " response
+        if [ "$response" == "y" ] || [ "$response" == "Y" ]; then
+            CREATE_FRAMEWORK=true
+        fi
+    fi
+fi
+
+# Install framework files
+if [ "$CREATE_FRAMEWORK" == "true" ]; then
+    echo ""
+    echo "Installing $TYPE framework files..."
+    
+    if [ "$TYPE" == "laravel" ]; then
+        echo "Running: composer create-project laravel/laravel temp_laravel"
+        echo "(This may take a few minutes to download packages...)"
+        composer create-project laravel/laravel temp_laravel --prefer-dist
+        
+        if [ -d "temp_laravel" ]; then
+            cp -r temp_laravel/* "$PROJECT_PATH/"
+            cp -r temp_laravel/.* "$PROJECT_PATH/" 2>/dev/null || true
+            rm -rf temp_laravel
+            echo "✓ Laravel framework files installed successfully"
+        else
+            echo "✗ Failed to create Laravel project. Is Composer installed?"
+        fi
+    elif [ "$TYPE" == "symfony" ]; then
+        echo "Choose Symfony project type:"
+        echo "  1. Skeleton (minimal)"
+        echo "  2. WebApp (full-stack with Twig, Doctrine, etc.)"
+        read -p "Enter choice (1 or 2): " symfony_type
+        
+        if [ "$symfony_type" == "2" ]; then
+            PROJECT_TYPE="symfony/webapp"
+        else
+            PROJECT_TYPE="symfony/skeleton"
+        fi
+        
+        echo "Running: composer create-project $PROJECT_TYPE temp_symfony"
+        echo "(This may take a few minutes to download packages...)"
+        composer create-project "$PROJECT_TYPE" temp_symfony --prefer-dist
+        
+        if [ -d "temp_symfony" ]; then
+            cp -r temp_symfony/* "$PROJECT_PATH/"
+            cp -r temp_symfony/.* "$PROJECT_PATH/" 2>/dev/null || true
+            rm -rf temp_symfony
+            echo "✓ Symfony framework files installed successfully"
+        else
+            echo "✗ Failed to create Symfony project. Is Composer installed?"
+        fi
+    elif [ "$TYPE" == "react" ]; then
+        echo "Running: npm create vite@latest temp_react -- --template react"
+        echo "(This may take a moment to download packages...)"
+        echo "n" | npm create vite@latest temp_react -- --template react
+        
+        if [ -d "temp_react" ]; then
+            cp -r temp_react/* "$PROJECT_PATH/"
+            cp -r temp_react/.* "$PROJECT_PATH/" 2>/dev/null || true
+            rm -rf temp_react
+            echo "✓ React (Vite) framework files installed successfully"
+            
+            # Install dependencies
+            echo "Installing npm dependencies..."
+            cd "$PROJECT_PATH"
+            npm install
+            cd - > /dev/null
+            echo "✓ npm dependencies installed"
+        else
+            echo "✗ Failed to create React project. Is Node.js/npm installed?"
+        fi
+    fi
+    echo ""
 fi
 
 # Generate SSL certificate for the project
@@ -142,10 +221,9 @@ else
       - CHOKIDAR_USEPOLLING=true
       - NODE_ENV=development
     volumes:
-      - \"./projects/react/$PROJECT_NAME:/app\"
-      - \"/app/node_modules\"
+      - "./projects/react/$PROJECT_NAME:/app"
     working_dir: /app
-    command: [\"npm\", \"run\", \"dev\", \"--\", \"--host\", \"0.0.0.0\"]
+    command: sh -c \"npm install && npm run dev -- --host 0.0.0.0\"
     restart: always
     networks:
       - app_network
@@ -171,7 +249,7 @@ server {
     index index.php index.html;
     error_log  /var/log/nginx/error.log;
     access_log /var/log/nginx/access.log;
-    root /var/www/$PROJECT_NAME/public;
+    root /var/www/php/$PROJECT_NAME/public;
 
     location / {
         try_files \$uri \$uri/ /index.php?\$query_string;
@@ -183,7 +261,7 @@ server {
         fastcgi_pass $TYPE-$PROJECT_NAME:9000;
         fastcgi_index index.php;
         include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        fastcgi_param SCRIPT_FILENAME /var/www/$PROJECT_NAME/public\$fastcgi_script_name;
         fastcgi_param PATH_INFO \$fastcgi_path_info;
     }
 }
@@ -200,7 +278,7 @@ server {
     index index.php index.html;
     error_log  /var/log/nginx/error.log;
     access_log /var/log/nginx/access.log;
-    root /var/www/$PROJECT_NAME/public;
+    root /var/www/php/$PROJECT_NAME/public;
 
     location / {
         try_files \$uri \$uri/ /index.php?\$query_string;
@@ -212,7 +290,7 @@ server {
         fastcgi_pass $TYPE-$PROJECT_NAME:9000;
         fastcgi_index index.php;
         include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        fastcgi_param SCRIPT_FILENAME /var/www/$PROJECT_NAME/public\$fastcgi_script_name;
         fastcgi_param PATH_INFO \$fastcgi_path_info;
     }
 }

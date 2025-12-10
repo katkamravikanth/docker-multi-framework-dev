@@ -23,11 +23,85 @@ Write-Host ""
 # Create project directory
 $phpType = if ($Type -eq "laravel" -or $Type -eq "symfony") { "php" } else { $Type }
 $projectPath = "projects\$phpType\$ProjectName"
+$createFramework = $false
+
 if (!(Test-Path $projectPath)) {
     New-Item -ItemType Directory -Path $projectPath -Force | Out-Null
     Write-Host "✓ Created directory: $projectPath" -ForegroundColor Green
+    $createFramework = $true
 } else {
-    Write-Host "⚠ Directory already exists: $projectPath" -ForegroundColor Yellow
+    # Check if directory is empty
+    $itemCount = (Get-ChildItem -Path $projectPath -Force | Measure-Object).Count
+    if ($itemCount -eq 0) {
+        Write-Host "⚠ Directory exists but is empty: $projectPath" -ForegroundColor Yellow
+        $createFramework = $true
+    } else {
+        Write-Host "⚠ Directory already exists with files: $projectPath" -ForegroundColor Yellow
+        $response = Read-Host "Do you want to create framework files anyway? (y/n)"
+        if ($response -eq "y" -or $response -eq "Y") {
+            $createFramework = $true
+        }
+    }
+}
+
+# Install framework files
+if ($createFramework) {
+    Write-Host "" 
+    Write-Host "Installing $Type framework files..." -ForegroundColor Cyan
+    
+    if ($Type -eq "laravel") {
+        Write-Host "Running: composer create-project laravel/laravel temp_laravel" -ForegroundColor Gray
+        Write-Host "(This may take a few minutes to download packages...)" -ForegroundColor Gray
+        composer create-project laravel/laravel "temp_laravel" --prefer-dist
+        
+        if (Test-Path "temp_laravel") {
+            Get-ChildItem -Path "temp_laravel" -Force | Copy-Item -Destination $projectPath -Recurse -Force
+            Remove-Item -Path "temp_laravel" -Recurse -Force
+            Write-Host "✓ Laravel framework files installed successfully" -ForegroundColor Green
+        } else {
+            Write-Host "✗ Failed to create Laravel project. Is Composer installed?" -ForegroundColor Red
+        }
+    }
+    elseif ($Type -eq "symfony") {
+        Write-Host "Choose Symfony project type:" -ForegroundColor Yellow
+        Write-Host "  1. Skeleton (minimal)" -ForegroundColor White
+        Write-Host "  2. WebApp (full-stack with Twig, Doctrine, etc.)" -ForegroundColor White
+        $symfonyType = Read-Host "Enter choice (1 or 2)"
+        
+        $projectType = if ($symfonyType -eq "2") { "symfony/webapp" } else { "symfony/skeleton" }
+        Write-Host "Running: composer create-project $projectType temp_symfony" -ForegroundColor Gray
+        Write-Host "(This may take a few minutes to download packages...)" -ForegroundColor Gray
+        composer create-project $projectType "temp_symfony" --prefer-dist
+        
+        if (Test-Path "temp_symfony") {
+            Get-ChildItem -Path "temp_symfony" -Force | Copy-Item -Destination $projectPath -Recurse -Force
+            Remove-Item -Path "temp_symfony" -Recurse -Force
+            Write-Host "✓ Symfony framework files installed successfully" -ForegroundColor Green
+        } else {
+            Write-Host "✗ Failed to create Symfony project. Is Composer installed?" -ForegroundColor Red
+        }
+    }
+    elseif ($Type -eq "react") {
+        Write-Host "Running: npm create vite@latest temp_react -- --template react" -ForegroundColor Gray
+        Write-Host "(This may take a moment to download packages...)" -ForegroundColor Gray
+        "n" | npm create vite@latest "temp_react" -- --template react
+        
+        if (Test-Path "temp_react") {
+            Get-ChildItem -Path "temp_react" -Force | Copy-Item -Destination $projectPath -Recurse -Force
+            Remove-Item -Path "temp_react" -Recurse -Force
+            Write-Host "✓ React (Vite) framework files installed successfully" -ForegroundColor Green
+            
+            # Install dependencies
+            Write-Host "Installing npm dependencies..." -ForegroundColor Cyan
+            Push-Location $projectPath
+            npm install
+            Pop-Location
+            Write-Host "✓ npm dependencies installed" -ForegroundColor Green
+        } else {
+            Write-Host "✗ Failed to create React project. Is Node.js/npm installed?" -ForegroundColor Red
+        }
+    }
+    Write-Host ""
 }
 
 # Generate SSL certificate for the project
@@ -129,9 +203,8 @@ if ($Type -eq "laravel") {
       - NODE_ENV=development
     volumes:
       - "./projects/react/$ProjectName`:/app"
-      - "/app/node_modules"
     working_dir: /app
-    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     restart: always
     networks:
       - app_network
@@ -158,7 +231,7 @@ server {
     index index.php index.html;
     error_log  /var/log/nginx/error.log;
     access_log /var/log/nginx/access.log;
-    root /var/www/$ProjectName/public;
+    root /var/www/php/$ProjectName/public;
 
     location / {
         try_files `$uri `$uri/ /index.php?`$query_string;
@@ -170,7 +243,7 @@ server {
         fastcgi_pass $Type-$ProjectName`:9000;
         fastcgi_index index.php;
         include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME `$document_root`$fastcgi_script_name;
+        fastcgi_param SCRIPT_FILENAME /var/www/$ProjectName/public`$fastcgi_script_name;
         fastcgi_param PATH_INFO `$fastcgi_path_info;
     }
 }
@@ -187,7 +260,7 @@ server {
     index index.php index.html;
     error_log  /var/log/nginx/error.log;
     access_log /var/log/nginx/access.log;
-    root /var/www/$ProjectName/public;
+    root /var/www/php/$ProjectName/public;
 
     location / {
         try_files `$uri `$uri/ /index.php?`$query_string;
@@ -199,7 +272,7 @@ server {
         fastcgi_pass $Type-$ProjectName`:9000;
         fastcgi_index index.php;
         include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME `$document_root`$fastcgi_script_name;
+        fastcgi_param SCRIPT_FILENAME /var/www/$ProjectName/public`$fastcgi_script_name;
         fastcgi_param PATH_INFO `$fastcgi_path_info;
     }
 }

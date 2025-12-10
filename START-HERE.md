@@ -53,52 +53,78 @@ This starts:
 
 **Windows:**
 ```powershell
-# Laravel project
+# Laravel project (automatically creates framework files)
 .\add-project.ps1 -Type laravel -Name "myapp" -Port 9001
 
-# React project
+# Symfony project (choose skeleton or webapp during setup)
+.\add-project.ps1 -Type symfony -Name "myapi" -Port 9002
+
+# React project (automatically creates Vite + React)
 .\add-project.ps1 -Type react -Name "frontend" -Port 5173
 ```
 
 **Linux/macOS:**
 ```bash
-# Laravel project
+# Laravel project (automatically creates framework files)
 ./add-project.sh laravel myapp 9001
 
-# React project
+# Symfony project (choose skeleton or webapp during setup)
+./add-project.sh symfony myapi 9002
+
+# React project (automatically creates Vite + React)
 ./add-project.sh react frontend 5173
 ```
 
 > 🔒 **SSL Certificates:** The script automatically generates self-signed SSL certificates for each project in `etc/ssl/project-name/`
+> 
+> ✨ **Framework Files:** The script automatically creates framework files:
+> - **Laravel:** `composer create-project laravel/laravel`
+> - **Symfony:** Choice of `symfony/skeleton` or `symfony/webapp`
+> - **React:** `npm create vite@latest -- --template react`
 
 ### Step 4: Add Generated Config
 
 The script will output YAML code. Copy it and paste into `docker-compose.projects.yml`
 
-### Step 5: Place Your Code
+### Step 5: Add Nginx Configuration
 
-Put your application code in:
-- Laravel/Symfony: `projects/php/myapp/`
-- React: `projects/react/frontend/`
+The script will output Nginx virtual host config. Copy it and add to `etc/nginx/default.conf`
 
-### Step 6: Start Your Projects
+### Step 6: Update Hosts File
+
+Add the following to your hosts file:
+```
+127.0.0.1  myapp.local
+```
+- **Windows:** `C:\Windows\System32\drivers\etc\hosts` (Run as Administrator)
+- **Linux/macOS:** `/etc/hosts` (Use sudo)
+
+### Step 7: Start Your Projects
 
 ```powershell
 docker compose -f docker-compose.base.yml -f docker-compose.projects.yml up -d
 ```
 
-### Step 7: Setup Your Application
+### Step 8: Setup Your Application
 
 **Laravel:**
 ```powershell
-docker exec -it laravel-myapp composer install
+# Dependencies already installed during project creation
 docker exec -it laravel-myapp php artisan key:generate
 docker exec -it laravel-myapp php artisan migrate
 ```
 
+**Symfony:**
+```powershell
+# Dependencies already installed during project creation
+docker exec -it symfony-myapi php bin/console doctrine:migrations:migrate
+docker exec -it symfony-myapi php bin/console cache:clear
+```
+
 **React:**
 ```powershell
-docker exec -it react-frontend npm install
+# Dependencies already installed during project creation
+# Just access http://myapp.local or http://localhost:5173
 ```
 
 ---
@@ -163,6 +189,15 @@ Docker/
 
 ## ⚡ Common Commands
 
+### Add Project (with automatic framework installation)
+```powershell
+# Windows
+.\add-project.ps1 -Type laravel -Name "blog" -Port 9002
+
+# Linux/macOS
+./add-project.sh laravel blog 9002
+```
+
 ### Start All
 ```powershell
 docker compose -f docker-compose.base.yml -f docker-compose.projects.yml up -d
@@ -178,15 +213,6 @@ docker compose -f docker-compose.base.yml -f docker-compose.projects.yml down
 docker compose -f docker-compose.base.yml -f docker-compose.projects.yml logs -f
 ```
 
-### Add Project
-```powershell
-# Windows
-.\add-project.ps1 -Type laravel -Name "blog" -Port 9002
-
-# Linux/macOS
-./add-project.sh laravel blog 9002
-```
-
 ---
 
 ## 🆘 Need Help?
@@ -200,11 +226,12 @@ docker compose -f docker-compose.base.yml -f docker-compose.projects.yml logs -f
 
 - [ ] Build images (`build-images.ps1` or `build-images.sh`)
 - [ ] Start infrastructure (`docker compose -f docker-compose.base.yml up -d`)
-- [ ] Add your first project (`add-project.ps1` or `add-project.sh`)
-- [ ] Place your code in `projects/` directory
+- [ ] Add your first project (`add-project.ps1` or `add-project.sh`) - **framework files created automatically**
 - [ ] Update `docker-compose.projects.yml` with generated config
+- [ ] Add Nginx virtual host configuration to `etc/nginx/default.conf`
+- [ ] Update your hosts file with project domain
 - [ ] Start your project containers
-- [ ] Setup your application (composer/npm install, migrations, etc.)
+- [ ] Run application setup commands (migrations, cache clear, etc.)
 
 ---
 

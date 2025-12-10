@@ -1,17 +1,20 @@
 # 🐳 Multi-Project Docker Environment for Laravel, Symfony & React
 
-A scalable Docker setup that allows you to manage **multiple Laravel applications**, **multiple Symfony applications**, and **multiple React projects** using shared, reusable Docker images.
+A scalable Docker development environment for managing multiple Laravel, Symfony, and React projects with reusable images, automatic SSL certificate generation, virtual host support, and automated framework installation. Features modular Docker Compose configuration, cross-platform scripts, and easy project scaffolding.
 
 ## ✨ Features
 
 - 🔄 **Reusable Docker Images**: Build once, use for all projects
-- 📦 **Easy Project Addition**: Add new projects in minutes
+- 📦 **Easy Project Addition**: Add new projects in minutes with automatic framework installation
 - 🚀 **Shared Infrastructure**: MySQL, Nginx, phpMyAdmin, MailHog
 - 🎯 **Isolated Projects**: Each project runs independently
 - ⚡ **Fast Startup**: Pre-built images = quick container starts
 - 🛠️ **Cross-Platform**: Windows, Linux, and macOS support
 - 🎮 **Simple Management**: Interactive scripts and commands
 - 🎵 **Multi-Framework**: Laravel, Symfony, and React support
+- 🔒 **Automatic SSL**: Self-signed certificates generated for each project
+- 🌐 **Virtual Hosts**: Custom domains with nginx configuration
+- ✨ **Framework Files**: Automatically creates Laravel, Symfony, or React projects
 
 ## 📋 Prerequisites
 
@@ -54,65 +57,87 @@ This starts:
 
 **Windows:**
 ```powershell
-# Laravel
+# Laravel (automatically creates framework files)
 .\add-project.ps1 -Type laravel -Name "myapp" -Port 9001
 
-# Symfony
+# Symfony (choose skeleton or webapp)
 .\add-project.ps1 -Type symfony -Name "myblog" -Port 9002
 
-# React
+# React (automatically creates Vite + React app)
 .\add-project.ps1 -Type react -Name "frontend" -Port 5173
 ```
 
 **Linux/macOS:**
 ```bash
-# Laravel
+# Laravel (automatically creates framework files)
 ./add-project.sh laravel myapp 9001
 
-# Symfony
+# Symfony (choose skeleton or webapp)
 ./add-project.sh symfony myblog 9002
 
-# React
+# React (automatically creates Vite + React app)
 ./add-project.sh react frontend 5173
 ```
+
+> ✨ **Framework Files Automatically Created:**
+> - **Laravel:** Runs `composer create-project laravel/laravel`
+> - **Symfony:** Choice of `symfony/skeleton` or `symfony/webapp`
+> - **React:** Runs `npm create vite@latest -- --template react`
+> 
+> 🔒 **SSL Certificates:** Automatically generated for each project
 
 ### 4. Update docker-compose.projects.yml
 
 Copy the generated YAML from the script output and paste it into `docker-compose.projects.yml`
 
-### 5. Place Your Code
+### 5. Add Nginx Configuration
 
-Put your application code in:
-- Laravel: `projects/php/myapp/`
-- Symfony: `projects/php/myblog/`
-- React: `projects/react/frontend/`
+Copy the generated Nginx configuration and add it to `etc/nginx/default.conf`
 
-### 6. Start Your Projects
+### 6. Update Hosts File
+
+Add the generated domain to your hosts file:
+```
+127.0.0.1  myapp.local
+```
+- **Windows:** `C:\Windows\System32\drivers\etc\hosts` (Run as Administrator)
+- **Linux/macOS:** `/etc/hosts` (Use sudo)
+
+### 7. Start Your Projects
 
 ```bash
 docker compose -f docker-compose.base.yml -f docker-compose.projects.yml up -d
 ```
 
-### 7. Setup Your Applications
+### 8. Setup Your Applications
 
 **Laravel:**
 ```bash
-docker exec -it laravel-myapp composer install
+# Framework files already created, just setup database
 docker exec -it laravel-myapp php artisan key:generate
 docker exec -it laravel-myapp php artisan migrate
 ```
 
 **Symfony:**
 ```bash
-docker exec -it symfony-myblog composer install
+# Framework files already created, just setup database
 docker exec -it symfony-myblog php bin/console doctrine:database:create
 docker exec -it symfony-myblog php bin/console doctrine:migrations:migrate
 ```
 
 **React:**
 ```bash
-docker exec -it react-frontend npm install
+# Framework files and dependencies already installed
+# Access at http://frontend.local or http://localhost:5173
 ```
+
+### 9. Access Your Applications
+
+- **Laravel/Symfony:** http://myapp.local or https://myapp.local
+- **React App:** http://frontend.local or http://localhost:5173
+- **phpMyAdmin**: http://localhost:8080
+- **MailHog UI**: http://localhost:8025
+- **MySQL**: localhost:3306
 
 ### 8. Access Your Applications
 
@@ -145,14 +170,22 @@ docker exec -it react-frontend npm install
 
 The script will:
 1. Create the project directory
-2. Generate SSL certificates for HTTPS (self-signed, valid for 365 days)
-3. Generate the service definition YAML
-4. Show you what to add to `docker-compose.projects.yml`
+2. **Automatically install framework files** (Laravel, Symfony, or React)
+3. Generate SSL certificates for HTTPS (self-signed, valid for 365 days)
+4. Generate the service definition YAML
+5. Generate Nginx virtual host configuration
+6. Show you what to add to `docker-compose.projects.yml` and `etc/nginx/default.conf`
 
 Then:
 1. Copy the generated YAML to `docker-compose.projects.yml`
-2. Place your code in the created directory
-3. Restart: `docker compose -f docker-compose.base.yml -f docker-compose.projects.yml up -d`
+2. Copy the generated Nginx config to `etc/nginx/default.conf`
+3. Add the domain to your hosts file
+4. Restart: `docker compose -f docker-compose.base.yml -f docker-compose.projects.yml restart`
+
+**Framework Installation:**
+- **Laravel:** `composer create-project laravel/laravel`
+- **Symfony:** Choice of `symfony/skeleton` or `symfony/webapp`
+- **React:** `npm create vite@latest -- --template react`
 
 **Note:** SSL certificates are stored in `etc/ssl/project-name/` and can be used with Nginx for HTTPS.
 
